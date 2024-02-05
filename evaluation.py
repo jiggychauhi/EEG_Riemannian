@@ -40,7 +40,7 @@ from sklearn.decomposition import PCA
 #     QuantumMDMWithRiemannianPipeline,
 # )
 from sklearn.pipeline import make_pipeline
-from pyriemann_qiskit.autoencoders import BasicQnnAutoencoder
+from autoencoders import BasicQnnAutoencoder
 from pyriemann.spatialfilters import Xdawn
 print(__doc__)
 
