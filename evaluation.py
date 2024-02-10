@@ -136,21 +136,23 @@ class Devectorizer(TransformerMixin):
 
 pipelines["LDA_denoised"] = make_pipeline(
     # select only 2 components
-    Xdawn(nfilter=2),
+    Xdawn(nfilter=1),
     Vectorizer(),
-    BasicQnnAutoencoder(5, 3),
+    BasicQnnAutoencoder(6, 1),
     Devectorizer(),
-    ERPCovariances(),
+    # ERPCovariances(estimator='lwf'),
+    Covariances(),
     TangentSpace(),
     # PCA(n_components=4),
     LDA()
 )
 
 pipelines["LDA"] = make_pipeline(
-    Xdawn(nfilter=2),
+    Xdawn(nfilter=1),
     # Vectorizer(),
     # Devectorizer(),
-    ERPCovariances(),
+    # ERPCovariances(estimator='lwf'),
+    Covariances(),
     # Whitening(dim_red={"n_components": 2}),
     TangentSpace(), 
     # PCA(n_components=4),
