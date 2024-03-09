@@ -139,20 +139,20 @@ class Devectorizer(TransformerMixin):
         return X.reshape((n_trial, 4, 64))
 
 
-pipelines["LDA_denoised"] = make_pipeline(
-    # select only 2 components
-    Xdawn(nfilter=2),
-    Vectorizer(),
-    BasicQnnAutoencoder(6, 2),
-    Devectorizer(),
-    Covariances(),
-    TangentSpace(),
-    # PCA(n_components=4),
-    LDA()
-)
+# pipelines["LDA_denoised"] = make_pipeline(
+#     # select only 2 components
+#     Xdawn(nfilter=2),
+#     Vectorizer(),
+#     BasicQnnAutoencoder(6, 2),
+#     Devectorizer(),
+#     Covariances(),
+#     TangentSpace(),
+#     # PCA(n_components=4),
+#     LDA()
+# )
 
 pipelines["LDA"] = make_pipeline(
-    Xdawn(nfilter=2),
+    Xdawn(nfilter=3),
     # Vectorizer(),
     # Devectorizer(),
     Covariances(),
@@ -177,13 +177,13 @@ evaluation = CrossSessionEvaluation(
 
 results = evaluation.process(pipelines)
 
-autoencoder = pipelines["LDA_denoised"].named_steps['BasicQnnAutoencoder']
+# autoencoder = pipelines["LDA_denoised"].named_steps['BasicQnnAutoencoder']
 
-plt.plot(autoencoder.cost_)
-plt.xlabel('Epoch')
-plt.ylabel('Cost')
-plt.title('Autoencoder Cost')
-plt.show()
+# plt.plot(autoencoder.cost_)
+# plt.xlabel('Epoch')
+# plt.ylabel('Cost')
+# plt.title('Autoencoder Cost')
+# plt.show()
 
 print("Averaging the session performance:")
 print(results.groupby("pipeline").mean("score")[["score", "time"]])
