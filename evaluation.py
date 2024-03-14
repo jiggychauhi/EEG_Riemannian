@@ -177,7 +177,7 @@ evaluation = CrossSessionEvaluation(
 
 results = evaluation.process(pipelines)
 
-# autoencoder = pipelines["LDA_denoised"].named_steps['BasicQnnAutoencoder']
+# autoencoder = pipelines["LDA_denoised"].named_steps['basicqnnautoencoder']
 
 # plt.plot(autoencoder.cost_)
 # plt.xlabel('Epoch')
