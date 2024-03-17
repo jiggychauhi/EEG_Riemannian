@@ -44,6 +44,7 @@ class BasicQnnAutoencoder(TransformerMixin):
         self.ae = None
         self.num_latent = num_latent
         self.num_trash = num_trash
+        self.cost = []
 
     def fit(self, X, _y=None, **kwargs):
         _, n_features = X.shape
@@ -76,9 +77,7 @@ class BasicQnnAutoencoder(TransformerMixin):
             probabilities = qnn.forward(X, params_values)
             cost = np.sum(probabilities[:, 1]) / X.shape[0]
             # keep track of the cost
-            if not hasattr(self, "cost_"):
-                self.cost_ = []
-            self.cost_.append(cost)
+            self.cost.append(cost)
             return cost
 
         opt = ADAM(maxiter=1000)
