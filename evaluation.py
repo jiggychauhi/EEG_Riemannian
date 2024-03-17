@@ -179,7 +179,7 @@ results = evaluation.process(pipelines)
 
 # autoencoder = pipelines["LDA_denoised"].named_steps['basicqnnautoencoder']
 
-# plt.plot(autoencoder.cost_)
+# plt.plot(autoencoder.cost)
 # plt.xlabel('Epoch')
 # plt.ylabel('Cost')
 # plt.title('Autoencoder Cost')
