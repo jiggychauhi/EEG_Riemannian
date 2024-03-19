@@ -10,7 +10,7 @@ from qiskit_machine_learning.neural_networks import SamplerQNN
 from qiskit_algorithms.utils import algorithm_globals
 
 algorithm_globals.seed = 42
-
+global_cost_list = []
 
 def ansatz(num_qubits):
     return RealAmplitudes(num_qubits, reps=5)
@@ -44,7 +44,6 @@ class BasicQnnAutoencoder(TransformerMixin):
         self.ae = None
         self.num_latent = num_latent
         self.num_trash = num_trash
-        self.cost = []
 
     def fit(self, X, _y=None, **kwargs):
         _, n_features = X.shape
@@ -77,7 +76,7 @@ class BasicQnnAutoencoder(TransformerMixin):
             probabilities = qnn.forward(X, params_values)
             cost = np.sum(probabilities[:, 1]) / X.shape[0]
             # keep track of the cost
-            self.cost.append(cost)
+            global_cost_list.append(cost)
             return cost
 
         opt = ADAM(maxiter=1000)
