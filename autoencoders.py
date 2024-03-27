@@ -2,7 +2,7 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumRegister
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import RealAmplitudes
-from qiskit_algorithms.optimizers import COBYLA
+from qiskit_algorithms.optimizers import COBYLA, ADAM, SLSQP, SPSA
 from qiskit.quantum_info import Statevector
 
 from qiskit_machine_learning.circuit.library import RawFeatureVector
@@ -38,6 +38,8 @@ class BasicQnnAutoencoder(TransformerMixin):
     def __init__(self, num_latent=3, num_trash=2):
         self.num_latent = num_latent
         self.num_trash = num_trash
+        self.cost = []
+        self.iter = 0
 
     def fit(self, X, _y=None, **kwargs):
         _, n_features = X.shape
@@ -67,13 +69,22 @@ class BasicQnnAutoencoder(TransformerMixin):
             output_shape=2,
         )
         
+        opt = SPSA(maxiter=100, blocking=True)
+        # opt = ADAM(maxiter=1000)
+        # opt = COBYLA(maxiter=1000)
+        # opt = SLSQP(maxiter=1000)
+
         def cost_func(params_values):
-          print(params_values)
+          self.iter += 1
+          if self.iter % 10 == 0:
+            # print(self.iter, opt._t)
+            print(self.iter)
           probabilities = qnn.forward(X, params_values)
           cost = np.sum(probabilities[:, 1]) / X.shape[0]
+          self.cost.append(cost)
           return cost
 
-        opt = COBYLA(maxiter=1000)
+        
         initial_point = algorithm_globals.random.random(self.ae.num_parameters)
         opt_result = opt.minimize(
             fun=cost_func,
@@ -111,6 +122,7 @@ class BasicQnnAutoencoder(TransformerMixin):
         return self
 
     def transform(self, X, **kwargs):
+        print(self.cost)
         _, n_features = X.shape
         outputs = []
         for trial in X:
