@@ -9,7 +9,7 @@ import numpy as np
 
 URL = "https://zenodo.org/record/5055046/files/"
 
-events = dict(easy=2, medium=3)
+events = dict(easy=2, medium=3, diff=4)
 class Neuroergonomics2021Dataset(BaseDataset):
     def __init__(self):
         super().__init__(
@@ -38,8 +38,12 @@ class Neuroergonomics2021Dataset(BaseDataset):
             med = os.path.join(session_path, f"alldata_sbj{str(subject).zfill(2)}_sess{session}_{'MATBmed'}.set")
             med_epochs = mne.io.read_epochs_eeglab(med)
             
+            # get task 'diff'
+            diff = os.path.join(session_path, f"alldata_sbj{str(subject).zfill(2)}_sess{session}_{'MATBdiff'}.set")
+            diff_epochs = mne.io.read_epochs_eeglab(med)
+
             # concatenate raw data
-            raw_data = np.concatenate((easy_epochs.get_data(), med_epochs.get_data()))
+            raw_data = np.concatenate((easy_epochs.get_data(), med_epochs.get_data(), diff_epochs.get_data()))
             # reshape data in the form n_channel x n_sample
             raw_data = raw_data.transpose((1, 0, 2))
             n_channel, n_epochs, n_samples = raw_data.shape
@@ -48,9 +52,11 @@ class Neuroergonomics2021Dataset(BaseDataset):
             # add stim channel
             n_epochs_easy = easy_epochs.get_data().shape[0]
             n_epochs_med = med_epochs.get_data().shape[0]
+            n_epochs_diff = diff_epochs.get_data().shape[0]
             stim = np.zeros((1, n_epochs * n_samples))
             for i in range(n_epochs):
-                stim[0, n_samples * i + 1] = events['easy'] if i < n_epochs_easy else events['medium']
+                stim[0, n_samples * i + 1] = events['easy'] if i < n_epochs_easy else \
+                                                events['medium'] if i < n_epochs_easy + n_epochs_med else events['diff']
 
             raw_data = np.concatenate((raw_data, stim))
             
