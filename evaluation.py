@@ -12,7 +12,7 @@ import seaborn as sns
 from moabb import set_log_level
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from pyriemann.tangentspace import TangentSpace
-from pyriemann.estimation import XdawnCovariances, ERPCovariances
+from pyriemann.estimation import XdawnCovariances, ERPCovariances, Covariances
 from pyriemann.preprocessing import Whitening
 from moabb.datasets import (
     # bi2012,
@@ -42,6 +42,7 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from autoencoders import BasicQnnAutoencoder
 from pyriemann.spatialfilters import Xdawn
+
 print(__doc__)
 
 ##############################################################################
@@ -60,6 +61,7 @@ set_log_level("info")
 # 1) Create paradigm
 # 2) Load datasets
 from moabb.paradigms import RestingStateToP300Adapter
+
 events = dict(easy=2, medium=3)
 paradigm = RestingStateToP300Adapter(events=events, tmin=0, tmax=0.5)
 
@@ -79,11 +81,12 @@ datasets = [Neuroergonomics2021Dataset()]
 
 # reduce the number of subjects, the Quantum pipeline takes a lot of time
 # if executed on the entire dataset
-n_subjects = 2
+start_subject = 14
+stop_subject = 15
 title = "Datasets: "
 for dataset in datasets:
     title = title + " " + dataset.code
-    dataset.subject_list = dataset.subject_list[0:n_subjects]
+    dataset.subject_list = dataset.subject_list[start_subject:stop_subject]
 
 # Change this to true to test the quantum optimizer
 quantum = False
@@ -102,13 +105,6 @@ labels_dict = {"Target": 1, "NonTarget": 0}
 
 pipelines = {}
 
-# pipelines["mean=convex/distance=euclid"] = QuantumMDMWithRiemannianPipeline(
-#     convex_metric="mean", quantum=quantum
-# )
-
-# pipelines["mean=logeuclid/distance=convex"] = QuantumMDMWithRiemannianPipeline(
-#     convex_metric="distance", quantum=quantum
-# )
 
 class Vectorizer(TransformerMixin):
     def __init__(self, is_even=True):
@@ -122,6 +118,7 @@ class Vectorizer(TransformerMixin):
         print(X.shape)
         return X.reshape((n_trial, n_features * n_samples))
 
+
 class Devectorizer(TransformerMixin):
     def __init__(self, is_even=True):
         self.is_even = is_even
@@ -130,17 +127,17 @@ class Devectorizer(TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        n_trial, _= X.shape
+        n_trial, _ = X.shape
         print(X.shape)
-        return X.reshape((n_trial, 4, 64))
+        return X.reshape((n_trial, 8, 64))
+
 
 pipelines["LDA_denoised"] = make_pipeline(
     # select only 2 components
-    Xdawn(nfilter=1),
+    Xdawn(nfilter=4),
     Vectorizer(),
-    BasicQnnAutoencoder(6, 1),
+    BasicQnnAutoencoder(8, 1),
     Devectorizer(),
-    # ERPCovariances(estimator='lwf'),
     Covariances(),
     TangentSpace(),
     # PCA(n_components=4),
@@ -148,13 +145,12 @@ pipelines["LDA_denoised"] = make_pipeline(
 )
 
 pipelines["LDA"] = make_pipeline(
-    Xdawn(nfilter=1),
-    # Vectorizer(),
-    # Devectorizer(),
-    # ERPCovariances(estimator='lwf'),
+    Xdawn(nfilter=4),
+    Vectorizer(),
+    Devectorizer(),
     Covariances(),
     # Whitening(dim_red={"n_components": 2}),
-    TangentSpace(), 
+    TangentSpace(),
     # PCA(n_components=4),
     LDA()
 )
@@ -174,9 +170,17 @@ evaluation = CrossSessionEvaluation(
 
 results = evaluation.process(pipelines)
 
+autoencoder = pipelines["LDA_denoised"].named_steps['basicqnnautoencoder']
+
+print(autoencoder.cost)
+plt.plot(autoencoder.cost)
+plt.xlabel('Epoch')
+plt.ylabel('Cost')
+plt.title('Autoencoder Cost')
+plt.show()
+
 print("Averaging the session performance:")
 print(results.groupby("pipeline").mean("score")[["score", "time"]])
-
 
 # ##############################################################################
 # # Plot Results
